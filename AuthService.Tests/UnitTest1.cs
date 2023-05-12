@@ -1,4 +1,4 @@
-namespace AuthService.Tests;
+/*cnamespace AuthService.Tests;
 
 public class Tests
 {
@@ -13,3 +13,4 @@ public class Tests
         Assert.Pass();
     }
 }
+*/
