@@ -11,23 +11,30 @@ using MongoDB.Bson;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 using AuthService.Services;
-
+using AuthService.Models;
+using VaultSharp;
+using VaultSharp.V1.AuthMethods.Token;
+using VaultSharp.V1.AuthMethods;
+using VaultSharp.V1.Commons;
 
 namespace AuthService.Controllers
 {
     // En API-controller, der håndterer godkendelses- og login-processen for kunder.
     [ApiController]
-    [Route("[AuthService]")]
+    [Route("authservice/v1")]
     public class AuthController : ControllerBase
     {
-        private readonly LoginService _loginService;
-        private readonly CustomerService _customerService;
+        private readonly ILogger<AuthController> _logger;
 
-        public AuthController(LoginService loginService, CustomerService customerService)
+        private readonly IConfiguration _config;
+        private readonly LoginService _loginService;
+       
+  
+        //Controller:
+        public AuthController(ILogger<AuthController> logger, IConfiguration config)
         {
-            // Injicerer en LoginService- og CustomerService-afhængighed for at kunne bruge dem i controllerens metoder.
-            _loginService = loginService;
-            _customerService = customerService;
+            _logger = logger;
+            _config = config; 
         }
 
         // En offentlig metode, der håndterer login-funktionaliteten.
@@ -43,7 +50,7 @@ namespace AuthService.Controllers
             catch (Exception ex)
             {
                 // Logger en fejl, hvis der opstår en exception under login-processen.
-                _loginService.Logger.LogError($"Fejl ved login metode: {ex.Message}");
+                _loginService._logger.LogError($"Fejl ved login metode: {ex.Message}");
                 throw;
             }
         }
@@ -61,7 +68,7 @@ namespace AuthService.Controllers
             catch (Exception ex)
             {
                 // Hvis valideringen fejler, logges en fejlmeddelelse, og der returneres en 404 Not Found statuskode.
-                _loginService.Logger.LogError(ex, ex.Message);
+                _logger.LogError(ex, ex.Message);
                 return StatusCode(404);
             }
         }
@@ -76,6 +83,10 @@ namespace AuthService.Controllers
             {
                 properties.Add($"{attribute.AttributeType.Name} - {attribute.ToString()}"); // Tilføjer attributnavnet og dens værdi til listen over metadata.
             }
+
+            // Logning af metadata
+            _logger.LogInformation($"Hentet assembly-metadata for version: {properties}");
+            
             return properties; // Returnerer listen over metadata.
         }
     }

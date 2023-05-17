@@ -2,7 +2,8 @@ using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using System.Collections.Generic;
 
-
+namespace AuthService.Models
+{
 public class LoginInfo
     {
         [BsonId]
@@ -11,4 +12,5 @@ public class LoginInfo
         public string? Email { get; set; }
         public string? Password { get; set; }
     }
+}
     

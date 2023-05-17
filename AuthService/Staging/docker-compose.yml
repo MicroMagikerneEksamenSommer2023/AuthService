@@ -1,36 +1,43 @@
 services:
   auth-service:
-    image: kerstineboldsen/authservice
+    image: authservice_image:latest
     ports:
-    - "8201:80"
-    depends_on:
-    - mongodb
+    - "8202:80"
     environment:
-      - connectionsstring="mongodb://root:password@localhost:27017/?authSource=admin"
-      - database="LoginCredentials"
-      - collection="customers"
-      - secret="kerrik123456789123456789123456789"
-      - issuer="authservice123456789123456789"
-  nginx:
-    image: nginx:latest
-    ports:
-    - 4000:4000
-    depends_on:
-    - auth-service
-    volumes:
-    - ./nginx.conf:/etc/nginx/nginx.conf
-
-  mongodb:
-    image: mongo:latest
-    ports:
-    - 27018:27017
+      - secret=kerrik123456789123456789123456789
+      - issuer=authservice123456789123456789
+      - HostnameVault=vault
+      
+  vault_dev:
+    image: hashicorp/vault:latest
+    restart: on-failure:10
+    hostname: vault
+    expose:
+      - "8201"
+    ports: 
+      - "8200:8200"
     environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: password
+      VAULT_ADDR: 'http://0.0.0.0:8200'
+      VAULT_LOCAL_CONFIG: '{"listener": [{"tcp":{"address":"0.0.0.0:8201","tls_disable":"0", "tls_cert_file":"/data/cert.pem","tls_key_file":"/data/key.pem"}}], "default_lease_ttl": "168h", "max_lease_ttl": "720h"}, "ui": true}'
+      VAULT_DEV_ROOT_TOKEN_ID: '00000000-0000-0000-0000-000000000000'
+      VAULT_TOKEN: '00000000-0000-0000-0000-000000000000'
+    cap_add:
+      - IPC_LOCK
     volumes:
-    - mongodb_data_container:/data/db
+      - ./vault-volume:/data
+    healthcheck:
+      retries: 5
+    command: server -dev -dev-root-token-id="00000000-0000-0000-0000-000000000000"
 
-volumes:
-  mongodb_data_container:
-  images_data:
-    external: false
+  # script:
+  #   image: hashicorp/vault:latest
+  #   command: sh "/app/populate_vault.sh"
+  #   depends_on:
+  #     - vault_dev
+  #   healthcheck:
+  #     retries: 5
+  #   volumes:
+  #     - ./populate_vault.sh:/app/populate_vault.sh
+networks:
+  default:
+    driver: bridge

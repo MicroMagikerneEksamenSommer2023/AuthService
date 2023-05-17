@@ -1,64 +1,150 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using VaultSharp;
+using VaultSharp.V1.AuthMethods.Token;
+using VaultSharp.V1.AuthMethods;
+using VaultSharp.V1.Commons;
+using AuthService.Models; 
+using NLog;
+using NLog.Web;
+using AuthService.Services;
 
+// Opsætter NLog som default loggingtool 
+var logger = NLog.LogManager.Setup().LoadConfigurationFromAppSettings().GetCurrentClassLogger();
 
-var builder = WebApplication.CreateBuilder(args);
+logger.Debug("init main");
 
-// Hent værdien af miljøvariablerne "Secret" og "Issuer" eller sæt dem til "none", hvis de ikke findes
-string mySecret = Environment.GetEnvironmentVariable("Secret") ?? "none";
-string myIssuer = Environment.GetEnvironmentVariable("Issuer") ?? "none";
-
-// Tilføj JWT authentication til tjenestesamlingen med de angivne valideringsparametre
-builder.Services
-    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters()
-        {
-            // Valider udsteder
-            ValidateIssuer = true,
-            // Valider modtager
-            ValidateAudience = true,
-            // Valider levetid
-            ValidateLifetime = true,
-            // Valider signatur af udsteder
-            ValidateIssuerSigningKey = true,
-            // Godkendt udsteder
-            ValidIssuer = myIssuer,
-            // Godkendt modtager
-            ValidAudience = "http://localhost",
-            // Signeringsnøgle
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(mySecret))
-        };
-    });
-
-// Tilføj services til containeren
-builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
-var app = builder.Build();
-
-
-// Konfigurer HTTP request pipeline
-if (app.Environment.IsDevelopment())
+try
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    var builder = WebApplication.CreateBuilder(args);
+
+    // Henter Vault hostname fra dockercompose
+    string hostnameVault = Environment.GetEnvironmentVariable("HostnameVault") ?? "vault";
+
+    // Opsætter Vault ved at bruge endpoint fra Vault
+    var EndPoint = $"https://{hostnameVault}:8200/";
+    var httpClientHandler = new HttpClientHandler();
+    httpClientHandler.ServerCertificateCustomValidationCallback =
+    (message, cert, chain, sslPolicyErrors) => { return true; };
+
+    // Initaliserer en af auth metoderne
+    IAuthMethodInfo authMethod =
+    new TokenAuthMethodInfo("00000000-0000-0000-0000-000000000000");
+
+    // Initaliser vault settings
+    var vaultClientSettings = new VaultClientSettings(EndPoint, authMethod)
+    {
+        Namespace = "",
+        MyHttpClientProviderFunc = handler => new HttpClient(httpClientHandler)
+        {
+            BaseAddress = new Uri(EndPoint)
+        }
+    };
+
+    // Initaliser vault client
+    IVaultClient vaultClient = new VaultClient(vaultClientSettings);
+
+     EnviromentVariables vaultSecrets = vaultSecrets = new EnviromentVariables
+    {
+        dictionary = new Dictionary<string, string>
+        {
+            { "secret", "kerrik123456789123456789123456789"},
+            { "issuer", "authservice123456789123456789"}
+        }
+    };;
+
+    // Bruger vault client til at læse key-value secrets
+    try {
+        Secret<SecretData> enviromentVariables = await vaultClient.V1.Secrets.KeyValue.V2.ReadSecretAsync(path: "enviromentVariables", mountPoint: "secret");
+
+        
+    // Initaliser string variables til at gemme miljø secrets
+    string? secret = enviromentVariables.Data.Data["secret"].ToString();
+    string? issuer = enviromentVariables.Data.Data["issuer"].ToString();
+
+     logger.Info($"Variables loaded in program.cs: Secret: {secret}, Issuer: {issuer}");
+
+    // Opretter en EnviromentVariabable objekt med en dictionary som kan indeholde secrets
+    vaultSecrets = new EnviromentVariables
+    {
+        dictionary = new Dictionary<string, string>
+        {
+            { "secret", secret },
+            { "issuer", issuer }
+        }
+    };
+    }
+
+    
+   
+   catch (Exception ex){
+    Console.WriteLine(""+ex.Message);
+
+    
+   };
+
+
+    // Tilføjer miljøvaribel objekt til projektet som en singletond
+    // Det kan tilgåes fra hele projektet
+    builder.Services.AddSingleton<EnviromentVariables>(vaultSecrets);
+
+
+    // tilføjer fuktionalitet som gør det muligt for projektet til at vertificere JWT-tokens
+    builder.Services
+        .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        .AddJwtBearer(options =>
+        {
+            options.TokenValidationParameters = new TokenValidationParameters()
+            {
+                ValidateIssuer = true,
+                ValidateAudience = false,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = vaultSecrets.dictionary["issuer"],
+                IssuerSigningKey =
+                    new SymmetricSecurityKey(Encoding.UTF8.GetBytes(vaultSecrets.dictionary["secret"]))
+            };
+        }
+        );
+
+
+    // Tilføjer services til projektet.
+    builder.Services.AddControllers();
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSwaggerGen();
+    builder.Services.AddScoped<LoginService>();
+
+    // Tilføjer NLog til projektet
+    builder.Logging.ClearProviders();
+    builder.Host.UseNLog();
+
+    var app = builder.Build();
+
+    // Configure the HTTP request pipeline.
+    if (app.Environment.IsDevelopment())
+    {
+        app.UseSwagger();
+        app.UseSwaggerUI();
+    }
+
+    app.UseHttpsRedirection();
+
+    app.UseAuthentication();
+
+    app.UseAuthorization();
+
+    app.MapControllers();
+
+    app.Run();
 }
-
-// Omdiriger HTTP forespørgsler til HTTPS
-app.UseHttpsRedirection();
-
-// Brug authentication
-app.UseAuthentication();
-
-// Brug authorization
-app.UseAuthorization();
-
-// Map HTTP forespørgsler til de angivne controllers
-app.MapControllers();
-
-app.Run();
+catch (Exception ex)
+{
+    logger.Error(ex, "Stopped program because of exception");
+    throw;
+}
+finally
+{
+    // Lukker NLog ned
+    NLog.LogManager.Shutdown();
+}
