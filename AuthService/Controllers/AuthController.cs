@@ -19,7 +19,7 @@ using VaultSharp.V1.Commons;
 
 namespace AuthService.Controllers
 {
-    // En API-controller, der håndterer godkendelses- og login-processen for kunder.
+    // Angiver at klassen er en controller for en API og aktiverer automatisk validering af anmodninger:
     [ApiController]
     [Route("authservice/v1")]
     public class AuthController : ControllerBase
@@ -30,64 +30,69 @@ namespace AuthService.Controllers
         private readonly LoginService _loginService;
        
   
-        //Controller:
+        // Konstruktør, der tager en logger og en konfiguration som argumenter:
         public AuthController(ILogger<AuthController> logger, IConfiguration config)
         {
             _logger = logger;
             _config = config; 
         }
 
-        // En offentlig metode, der håndterer login-funktionaliteten.
+        // Angiver, at denne metode kan tilgås uden autentifikation:
         [AllowAnonymous]
+        // Håndterer HTTP POST-anmodninger til "/authservice/v1/login" og tager imod en LoginInfo som parameter:
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginInfo login)
         {
             try
             {
-                // Kalder Login-metoden på LoginService-objektet for at forsøge at logge ind med de angivne login-oplysninger.
+                // Kalder Login-metoden på LoginService og returnerer resultatet:   
                 return await _loginService.Login(login);
             }
             catch (Exception ex)
             {
-                // Logger en fejl, hvis der opstår en exception under login-processen.
+                // Hvis der opstår en fejl, logges den og kastes som en undtagelse:
                 _loginService._logger.LogError($"Fejl ved login metode: {ex.Message}");
                 throw;
             }
         }
 
-        // En offentlig metode, der validerer en JWT-token.
+       
         [AllowAnonymous]
+        // Håndterer HTTP POST-anmodninger til "/authservice/v1/validate" og tager imod en token-streng som parameter:
         [HttpPost("validate")]
         public async Task<IActionResult> ValidateJwtToken([FromBody] string? token)
         {
             try
             {
-                // Kalder ValidateJwtToken-metoden på LoginService-objektet for at validere JWT-tokenen.
+                // Kalder ValidateJwtToken-metoden på LoginService og returnerer resultatet:
                 return await _loginService.ValidateJwtToken(token);
             }
             catch (Exception ex)
             {
-                // Hvis valideringen fejler, logges en fejlmeddelelse, og der returneres en 404 Not Found statuskode.
+               // Hvis der opstår en fejl, logges den og returneres en HTTP-fejlstatus:
                 _logger.LogError(ex, ex.Message);
                 return StatusCode(404);
             }
         }
 
-        // En offentlig metode, der returnerer en liste over metadata om assembly-versionen.
+       
         [HttpGet("version")]
         public IEnumerable<string> Get()
         {
             var properties = new List<string>();
-            var assembly = typeof(Program).Assembly; // Henter assembly-metadata for den nuværende applikation.
-            foreach (var attribute in assembly.GetCustomAttributesData()) // Gennemgår metadataen for hver attribut i assemblyet.
+            var assembly = typeof(Program).Assembly; 
+
+            // Henter metadata om assembly'en og tilføjer dem til en liste:
+            foreach (var attribute in assembly.GetCustomAttributesData()) 
             {
-                properties.Add($"{attribute.AttributeType.Name} - {attribute.ToString()}"); // Tilføjer attributnavnet og dens værdi til listen over metadata.
+                properties.Add($"{attribute.AttributeType.Name} - {attribute.ToString()}"); 
             }
 
-            // Logning af metadata
+            // Logger information om assembly-metadataen:
             _logger.LogInformation($"Hentet assembly-metadata for version: {properties}");
             
-            return properties; // Returnerer listen over metadata.
+            // Returnerer listen med assembly-metadata:
+            return properties; 
         }
     }
 }

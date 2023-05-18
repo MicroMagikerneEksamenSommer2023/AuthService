@@ -12,13 +12,13 @@ namespace AuthService.Controllers;
 [Route("[controller]")]
 public class TestController : ControllerBase
 {
-    //Field til at logge informationer med.
+    //Field til at logge informationer med:
     private readonly ILogger<TestController> _logger;
 
-    // Field til at hente konfigurationsdata fra.
+    // Field til at hente konfigurationsdata fra:
     private readonly IConfiguration _config;
 
-    //Denne metode kræver, at anmodninger til ruten autoriseres ved hjælp af en gyldig JWT-token.
+    //Denne metode kræver, at anmodninger til ruten autoriseres ved hjælp af en gyldig JWT-token:
     [Authorize]
     [HttpGet]
     public async Task<IActionResult> Get()
@@ -26,12 +26,10 @@ public class TestController : ControllerBase
         return Ok("You're authorized");
     }
     
+     // Konstruktør, der tager en logger og en konfiguration som argumenter:
     public TestController(ILogger<TestController> logger, IConfiguration config)
     {
-        // Tildeler IConfiguration-feltet den angivne konfiguration.
-        _config = config;
-
-        // Tildeler ILogger-feltet den angivne logger.
+        _config = config; 
         _logger = logger;
     }
 }

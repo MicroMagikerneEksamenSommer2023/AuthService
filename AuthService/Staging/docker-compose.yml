@@ -1,21 +1,21 @@
 services:
   auth-service:
     image: authservice_image:latest
+    depends_on:
+      - vault_dev
+      - script
     ports:
     - "8202:80"
     environment:
-      - secret=kerrik123456789123456789123456789
-      - issuer=authservice123456789123456789
       - HostnameVault=vault
-      
+    restart: unless-stopped
+    
   vault_dev:
     image: hashicorp/vault:latest
     restart: on-failure:10
     hostname: vault
-    expose:
-      - "8201"
     ports: 
-      - "8200:8200"
+      - "8200:8200"      
     environment:
       VAULT_ADDR: 'http://0.0.0.0:8200'
       VAULT_LOCAL_CONFIG: '{"listener": [{"tcp":{"address":"0.0.0.0:8201","tls_disable":"0", "tls_cert_file":"/data/cert.pem","tls_key_file":"/data/key.pem"}}], "default_lease_ttl": "168h", "max_lease_ttl": "720h"}, "ui": true}'
@@ -29,15 +29,15 @@ services:
       retries: 5
     command: server -dev -dev-root-token-id="00000000-0000-0000-0000-000000000000"
 
-  # script:
-  #   image: hashicorp/vault:latest
-  #   command: sh "/app/populate_vault.sh"
-  #   depends_on:
-  #     - vault_dev
-  #   healthcheck:
-  #     retries: 5
-  #   volumes:
-  #     - ./populate_vault.sh:/app/populate_vault.sh
+  script:
+    image: hashicorp/vault:latest
+    command: sh "/app/populate_vault.sh"
+    depends_on:
+      - vault_dev
+    healthcheck:
+      retries: 5
+    volumes:
+      - ./populate_vault.sh:/app/populate_vault.sh
 networks:
   default:
     driver: bridge
