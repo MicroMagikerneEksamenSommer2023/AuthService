@@ -8,8 +8,7 @@ services:
     - "8202:80"
     environment:
       - HostnameVault=vault
-    restart: unless-stopped
-    
+      
   vault_dev:
     image: hashicorp/vault:latest
     restart: on-failure:10
