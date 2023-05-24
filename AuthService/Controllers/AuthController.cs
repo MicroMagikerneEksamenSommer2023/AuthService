@@ -29,10 +29,11 @@ namespace AuthService.Controllers
        
   
         // Konstruktør, der tager en logger og en konfiguration som argumenter:
-        public AuthController(ILogger<AuthController> logger, IConfiguration config)
+        public AuthController(ILogger<AuthController> logger, IConfiguration config, LoginService loginService)
         {
             _logger = logger;
             _config = config; 
+            _loginService = loginService;
         }
 
         // Angiver, at denne metode kan tilgås uden autentifikation:
