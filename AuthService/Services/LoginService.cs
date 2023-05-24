@@ -21,6 +21,7 @@ namespace AuthService.Services
         public ILogger<LoginService> _logger { get; }
 
         private readonly HttpClient _httpClient;
+        private readonly string CustomerHTTPBase;
 
         //Intialiser miljøvariabler - Bruges til vault: 
         private readonly string? _secret;
@@ -35,8 +36,9 @@ namespace AuthService.Services
 
             //Miljøvariabel - burde være det her format: http://customerservice:8201
             // Indstiller baseadressen for HttpClient baseret på konfigurationen
-            httpClient.BaseAddress = new Uri(_config["CustomerServiceBassAddress"]);
             _httpClient = httpClient;
+            httpClient.BaseAddress = new Uri(_config["CustomerServiceBaseAddress"]);
+        
 
             // Henter secrets fra EnvironmentVariables-klassen, der er injiceret:
             _secret = vaultSecrets.dictionary["secret"];
@@ -49,7 +51,6 @@ namespace AuthService.Services
         public async Task<IActionResult> Login(LoginInfo login)
         {
             bool LoginConfirmed = false;
-
             // Udfører en GET-anmodning til "/cutomerservice/v1/checkcredentials" for at bekræfte login:
             //mangler måske service navn og port???????
             var respons = await _httpClient.GetAsync("/cutomerservice/v1/checkcredentials");
