@@ -19,22 +19,22 @@ try
 {
     var builder = WebApplication.CreateBuilder(args);
 
-    // Henter Vault hostname fra dockercompose:
+    // Henter Vault hostname fra dockercompose
     string hostnameVault = Environment.GetEnvironmentVariable("HostnameVault") ?? "vault";
 
-    // Opsætter Vault ved at bruge endpoint fra Vault:
+    // Opsætter Vault ved at bruge endpoint fra Vault
     var EndPoint = $"http://{hostnameVault}:8200/";
     var httpClientHandler = new HttpClientHandler();
     httpClientHandler.ServerCertificateCustomValidationCallback =
         (message, cert, chain, sslPolicyErrors) => { return true; };
 
-    // Initaliserer en af auth metoderne:
+    // Initaliserer en af auth metoderne
     IAuthMethodInfo authMethod =
         new TokenAuthMethodInfo("00000000-0000-0000-0000-000000000000");
 
     Console.WriteLine($"Bruger vault på addresen: {EndPoint}");
 
-    // Initaliser vault settings:
+    // Initaliser vault settings
     var vaultClientSettings = new VaultClientSettings(EndPoint, authMethod)
     {
         Namespace = "",
@@ -44,10 +44,9 @@ try
         }
     };
 
-    // Initaliser vault client:
+    // Initaliser vault client
     IVaultClient vaultClient = new VaultClient(vaultClientSettings);
 
-    // Initialiserer EnviromentVariables-objektet med hardcodede værdier:
     EnviromentVariables vaultSecrets = vaultSecrets = new EnviromentVariables
     {
         dictionary = new Dictionary<string, string>
@@ -59,6 +58,7 @@ try
 
     // Bruger vault client til at læse key-value secrets
     Secret<SecretData> enviromentVariables = await vaultClient.V1.Secrets.KeyValue.V2.ReadSecretAsync(path: "enviromentVariables", mountPoint: "secret");
+
 
     // Initaliser string variables til at gemme miljø secrets
     string? secret = enviromentVariables.Data.Data["secret"].ToString();
@@ -76,12 +76,12 @@ try
         }
     };
 
-    // Tilføjer EnviromentVariables-objektet til services som en singleton:
-    // Det kan tilgås fra hele projektet
+    // Tilføjer miljøvaribel objekt til projektet som en singletond
+    // Det kan tilgåes fra hele projektet
     builder.Services.AddSingleton<EnviromentVariables>(vaultSecrets);
 
 
-    // Tilføjer fuktionalitet som gør det muligt for projektet til at vertificere JWT-tokens:
+    // tilføjer fuktionalitet som gør det muligt for projektet til at vertificere JWT-tokens
     builder.Services
         .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         .AddJwtBearer(options =>
@@ -129,16 +129,12 @@ try
 }
 catch (System.Net.Http.HttpRequestException httpEx)
 {
-    // Hvis der opstår en HttpRequestException, logges den som en fejl
     logger.Error(httpEx, "Http Request error. ");
-    // Kaster exceptionen videre for at håndtere den højere oppe i stakken
     throw;
 }
 catch (Exception ex)
 {
-    // Hvis der opstår en generisk exception, logges den som en fejl
     logger.Error(ex, "Stopped program because of exception");
-    // Kaster exceptionen videre for at håndtere den højere oppe i stakken
     throw;
 }
 finally

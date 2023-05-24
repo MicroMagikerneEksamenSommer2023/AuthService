@@ -1,6 +1,6 @@
 services:
   auth-service:
-    image: authservice_image:latest
+    image: micromagikerne/auth-service:latest-dev
     depends_on:
       - vault_dev
       - script
