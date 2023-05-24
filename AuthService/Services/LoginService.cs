@@ -6,8 +6,6 @@ using System.Text;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Configuration;
-using MongoDB.Driver;
-using MongoDB.Bson;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 using AuthService.Models;
