@@ -56,6 +56,12 @@ namespace AuthService.Controllers
             }
         }
 
+        [Authorize]
+        [HttpGet("gateway")]
+        public async Task<IActionResult> NginxAuth()
+        {
+        return Ok("You're authorized");
+        }
        
         [AllowAnonymous]
         // Håndterer HTTP POST-anmodninger til "/authservice/v1/validate" og tager imod en token-streng som parameter:
