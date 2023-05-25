@@ -6,16 +6,18 @@ namespace AuthService.Models
 {
 public class LoginInfo
     {
-        [Newtonsoft.Json.JsonProperty("email")]
+       [Newtonsoft.Json.JsonProperty("email")]
         public string Email { get; set; }
-        [Newtonsoft.Json.JsonProperty("password")]
-        public string Password { get; set; }
 
-        [JsonConstructor]
-        public LoginInfo(string email, string password)
+        [Newtonsoft.Json.JsonProperty("accessCode")]
+        public string AccessCode { get; set; }
+
+  
+        public LoginInfo(string email, string accessCode)
         {
+            
             this.Email = email;
-            this.Password = password;
+            this.AccessCode = accessCode;
         }
     }
 }

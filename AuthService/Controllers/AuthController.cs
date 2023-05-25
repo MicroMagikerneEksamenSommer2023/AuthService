@@ -44,7 +44,7 @@ namespace AuthService.Controllers
         {
             try
             {
-                _logger.LogInformation("Login metode ramt, dette er dine login oplysinger:" + login.Email + login.Password);
+                _logger.LogInformation("Login metode ramt, dette er dine login oplysinger:" + login.Email + login.AccessCode);
                 // Kalder Login-metoden på LoginService og returnerer resultatet:   
                 return await _loginService.Login(login);
             }

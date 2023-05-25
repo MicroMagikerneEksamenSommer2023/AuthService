@@ -17,8 +17,6 @@ namespace AuthService.Services
     {
         private readonly IConfiguration _config;
         public ILogger<LoginService> _logger { get; }
-
-        private readonly HttpClient _httpClient;
         private readonly string CustomerHTTPBase;
 
         //Intialiser miljøvariabler - Bruges til vault: 
@@ -27,22 +25,20 @@ namespace AuthService.Services
         private readonly string? _issuer;
 
         // Konstruktør, der tager en konfiguration, en logger, en HttpClient og en EnviromentVariables som argumenter:
-        public LoginService(IConfiguration config, ILogger<LoginService> logger, HttpClient httpClient, EnviromentVariables vaultSecrets)
+        public LoginService(IConfiguration config, ILogger<LoginService> logger, EnviromentVariables vaultSecrets)
         {
             _config = config;
             _logger = logger;
+            CustomerHTTPBase = _config["customerhttpbase"];
 
             //Miljøvariabel - burde være det her format: http://customerservice:8201
             // Indstiller baseadressen for HttpClient baseret på konfigurationen
-            _httpClient = httpClient;
-            httpClient.BaseAddress = new Uri(_config["CustomerServiceBaseAddress"]);
-        
 
             // Henter secrets fra EnvironmentVariables-klassen, der er injiceret:
             _secret = vaultSecrets.dictionary["secret"];
             _issuer = vaultSecrets.dictionary["issuer"];
 
-            _logger.LogInformation($"LoginService oprettet med følgende konfiguration: BaseAddress: {httpClient.BaseAddress}, Secret: {_secret}, Issuer: {_issuer}");
+            _logger.LogInformation($"LoginService oprettet med følgende konfiguration: BaseAddress: {CustomerHTTPBase}, Secret: {_secret}, Issuer: {_issuer}");
         }
 
         // Metode til at udføre login:
@@ -51,15 +47,22 @@ namespace AuthService.Services
             bool LoginConfirmed = false;
             // Udfører en GET-anmodning til "/cutomerservice/v1/checkcredentials" for at bekræfte login:
             //mangler måske service navn og port???????
-            var respons = await _httpClient.GetAsync("/cutomerservice/v1/checkcredentials");
+           using (HttpClient client = new HttpClient())
+           {
+            client.BaseAddress = new Uri(CustomerHTTPBase);
+            string credentialsJson = Newtonsoft.Json.JsonConvert.SerializeObject(login);
+            HttpContent httpContent = new StringContent(credentialsJson, Encoding.UTF8, "application/json");
 
+            HttpResponseMessage response = await client.PostAsync("checkcredentials/",httpContent);
+
+           
             // Hvis anmodningen er blevet udført med succes:
-            if (respons.IsSuccessStatusCode)
+            if (response.IsSuccessStatusCode)
             {
-                var result = await respons.Content.ReadAsStringAsync();
+                var result = await response.Content.ReadAsStringAsync();
                 LoginConfirmed = Boolean.Parse(result);
             }
-
+           }
             // Hvis login er bekræftet:
             if (LoginConfirmed)
             {
