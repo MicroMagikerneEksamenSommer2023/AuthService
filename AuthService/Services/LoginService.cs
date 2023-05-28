@@ -13,7 +13,15 @@ using System.Net.Http;
 
 namespace AuthService.Services
 {
-    public class LoginService
+    public interface ILoginService
+    {
+        ILogger<LoginService> _logger { get; }
+
+        Task<IActionResult> Login(LoginInfo login);
+        Task<IActionResult> ValidateJwtToken(string token);
+    }
+
+    public class LoginService : ILoginService
     {
         private readonly IConfiguration _config;
         public ILogger<LoginService> _logger { get; }
@@ -47,22 +55,22 @@ namespace AuthService.Services
             bool LoginConfirmed = false;
             // Udfører en GET-anmodning til "/cutomerservice/v1/checkcredentials" for at bekræfte login:
             //mangler måske service navn og port???????
-           using (HttpClient client = new HttpClient())
-           {
-            client.BaseAddress = new Uri(CustomerHTTPBase);
-            string credentialsJson = Newtonsoft.Json.JsonConvert.SerializeObject(login);
-            HttpContent httpContent = new StringContent(credentialsJson, Encoding.UTF8, "application/json");
-
-            HttpResponseMessage response = await client.PostAsync("checkcredentials/",httpContent);
-
-           
-            // Hvis anmodningen er blevet udført med succes:
-            if (response.IsSuccessStatusCode)
+            using (HttpClient client = new HttpClient())
             {
-                var result = await response.Content.ReadAsStringAsync();
-                LoginConfirmed = Boolean.Parse(result);
+                client.BaseAddress = new Uri(CustomerHTTPBase);
+                string credentialsJson = Newtonsoft.Json.JsonConvert.SerializeObject(login);
+                HttpContent httpContent = new StringContent(credentialsJson, Encoding.UTF8, "application/json");
+
+                HttpResponseMessage response = await client.PostAsync("checkcredentials/", httpContent);
+
+
+                // Hvis anmodningen er blevet udført med succes:
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadAsStringAsync();
+                    LoginConfirmed = Boolean.Parse(result);
+                }
             }
-           }
             // Hvis login er bekræftet:
             if (LoginConfirmed)
             {

@@ -25,11 +25,11 @@ namespace AuthService.Controllers
         private readonly ILogger<AuthController> _logger;
 
         private readonly IConfiguration _config;
-        private readonly LoginService _loginService;
+        private readonly ILoginService _loginService;
        
   
         // Konstruktør, der tager en logger og en konfiguration som argumenter:
-        public AuthController(ILogger<AuthController> logger, IConfiguration config, LoginService loginService)
+        public AuthController(ILogger<AuthController> logger, IConfiguration config, ILoginService loginService)
         {
             _logger = logger;
             _config = config; 
