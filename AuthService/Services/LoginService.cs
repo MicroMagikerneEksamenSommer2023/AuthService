@@ -144,7 +144,7 @@ namespace AuthService.Services
                 _issuer,
                 "http://localhost",
                 claims,
-                expires: DateTime.Now.AddMinutes(15),
+                expires: DateTime.Now.AddHours(48),
                 signingCredentials: credentials);
 
             // logger en besked til logfilen, der indeholder oplysninger om hemmeligheden og udstederen, der bruges til at generere en JSON Web Token (JWT):
