@@ -73,7 +73,7 @@ namespace AuthService.Controllers
                 // Kalder ValidateJwtToken-metoden på LoginService og returnerer resultatet:
                 return await _loginService.ValidateJwtToken(token);
             }
-            catch (Exception ex)
+            catch (Exception ex) 
             {
                // Hvis der opstår en fejl, logges den og returneres en HTTP-fejlstatus:
                 _logger.LogError(ex, ex.Message);

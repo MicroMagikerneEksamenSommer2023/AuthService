@@ -8,6 +8,7 @@ namespace AuthService.Models
 
 		public EnviromentVariables()
 		{
+			
 		}
 	}
 }
