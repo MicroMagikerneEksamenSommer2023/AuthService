@@ -19,6 +19,7 @@ namespace AuthService.Services
 
         Task<IActionResult> Login(LoginInfo login);
         Task<IActionResult> ValidateJwtToken(string token);
+
     }
 
     public class LoginService : ILoginService

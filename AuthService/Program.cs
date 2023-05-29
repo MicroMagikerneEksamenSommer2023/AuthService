@@ -102,7 +102,7 @@ try
     builder.Services.AddControllers();
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen();
-    builder.Services.AddScoped<LoginService>();
+    builder.Services.AddScoped<ILoginService,LoginService>();
 
     // Tilføjer NLog til projektet
     builder.Logging.ClearProviders();
