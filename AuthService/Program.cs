@@ -17,8 +17,9 @@ logger.Debug("init main");
 
 try
 {
+    
     var builder = WebApplication.CreateBuilder(args);
-
+/*
     // Henter Vault hostname fra dockercompose
     string hostnameVault = Environment.GetEnvironmentVariable("HostnameVault") ?? "vault";
 
@@ -80,6 +81,17 @@ try
     // Det kan tilgåes fra hele projektet
     builder.Services.AddSingleton<EnviromentVariables>(vaultSecrets);
 
+*/
+
+EnviromentVariables vaultSecrets = vaultSecrets = new EnviromentVariables
+    {
+        dictionary = new Dictionary<string, string>
+        {
+            { "secret", "kerrik123456789123456789123456789"},
+            { "issuer", "authservice123456789123456789"}
+        }
+    };
+builder.Services.AddSingleton<EnviromentVariables>(vaultSecrets);
 
     // tilføjer fuktionalitet som gør det muligt for projektet til at vertificere JWT-tokens
     builder.Services
