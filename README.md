@@ -98,4 +98,5 @@ Når du sender en anmodning til `/checkcredentials` endpoint, skal du inkludere 
     "email": "henrik@example.com",
     "accessCode": "MinKode123"
 }
+
 Bemærk, at du stadig skal erstatte værdierne i JSON-dataen med de faktiske værdier, du ønsker at bruge til at kontrollere brugerens legitimationsoplysninger.
